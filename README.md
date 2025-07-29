@@ -52,25 +52,49 @@ cp .env.example .env.local
 Configura las siguientes variables en `.env.local`:
 
 \`\`\`env
-# Supabase Configuration
+# === RESEND CONFIGURATION ===
+RESEND_API_KEY=re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1
+RESEND_WEBHOOK_SECRET=your_webhook_secret_here
+
+# === SUPABASE CONFIGURATION ===
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
 
-# Resend API Configuration
-RESEND_API_KEY=your_resend_api_key_here
+# === DEVELOPMENT SETTINGS ===
+DEV_EMAIL_REDIRECT=fintdevla@gmail.com
 
-# Email Configuration
-FROM_EMAIL=noreply@yourdomain.com
+# === VERCEL/DEPLOYMENT ===
+NEXTAUTH_URL=http://localhost:3000
 
-# Development Email Redirect (optional)
-DEV_EMAIL_REDIRECT=test@yourdomain.com
+# === SECURITY ===
+WEBHOOK_SECRET=change-this-in-production
 
-# Webhook Configuration
-WEBHOOK_SECRET=your_webhook_secret_here
+# === ORGANIZATION SETTINGS (OPCIONAL) ===
+ORG_5_RESEND_API_KEY=re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1
 \`\`\`
 
-### 3. Configurar Supabase
+> **🔑 TU API KEY YA ESTÁ CONFIGURADA**: El sistema usará automáticamente `re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1`
+
+### 3. Configurar Webhook de Resend
+
+Para que las **secuencias automáticas** funcionen, configura el webhook en tu dashboard de Resend:
+
+1. Ve a [Resend Webhooks](https://resend.com/webhooks)
+2. Agrega un nuevo webhook con esta URL:
+   \`\`\`
+   https://tu-dominio.vercel.app/api/webhooks/resend
+   \`\`\`
+3. Selecciona estos eventos:
+   - `email.sent` - Email enviado
+   - `email.delivered` - Email entregado
+   - `email.opened` - Email abierto ⚡ **Dispara secuencias**
+   - `email.clicked` - Email clickeado ⚡ **Dispara secuencias**
+   - `email.bounced` - Email rebotado
+   - `email.complained` - Marcado como spam
+   - `email.failed` - Email falló
+
+### 4. Configurar Supabase
 
 Ejecuta el siguiente SQL en tu proyecto de Supabase para crear las tablas necesarias:
 
@@ -412,6 +436,60 @@ npm run build        # Build para producción
 npm run start        # Ejecutar build
 npm run lint         # Linting
 \`\`\`
+
+## 🧪 Prueba tu Configuración
+
+### **Verificar API Key de Resend**
+
+Una vez configurado, prueba que tu API key funciona:
+
+1. **Crear un contacto de prueba:**
+   \`\`\`bash
+   curl -X POST http://localhost:3000/api/sequences \\
+     -H "Content-Type: application/json" \\
+     -d '{
+       "action": "start",
+       "sequenceId": "SEQ-WELCOME-001", 
+       "contactEmail": "tu-email@gmail.com",
+       "variables": {
+         "nombre": "Prueba"
+       }
+     }'
+   \`\`\`
+
+2. **Verificar secuencias disponibles:**
+   \`\`\`bash
+   curl http://localhost:3000/api/sequences?stats=true
+   \`\`\`
+
+3. **Probar webhook (simulado):**
+   \`\`\`bash
+   curl -X POST http://localhost:3000/api/webhooks/resend \\
+     -H "Content-Type: application/json" \\
+     -H "resend-signature: test" \\
+     -d '{
+       "type": "email.opened",
+       "data": {
+         "email_id": "test-123",
+         "to": ["tu-email@gmail.com"],
+         "subject": "Test Email"
+       }
+     }'
+   \`\`\`
+
+### **Verificar Logs**
+
+Revisa la consola para ver logs como:
+\`\`\`
+🔄 SequenceEngine: Processing event email.opened
+🚀 Starting sequence SEQ-WELCOME-001 for contact contact-123
+📧 Sequence email sent: email-456
+🏷️ Tags updated for contact contact-123: +["Usuario Interesado"]
+\`\`\`
+
+### **Dashboard de Resend**
+
+Verifica en tu [dashboard de Resend](https://resend.com/emails) que los emails se están enviando correctamente.
 
 ## 🤝 Contribuir
 
