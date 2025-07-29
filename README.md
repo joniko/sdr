@@ -200,6 +200,8 @@ ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
 
 Puedes verificar la configuración visitando:
 - `GET /api/webhooks` - Información de todos los webhooks
+- `GET /webhooks` - Redirect automático a `/api/webhooks`
+- `GET /docs/webhooks` - Alias para documentación
 - `GET /api/webhooks/resend` - Información específica del webhook de Resend
 
 #### Características de los Webhooks
@@ -221,12 +223,44 @@ Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ## 📦 Deploy en Vercel
 
+### Configuración Optimizada
+
+El proyecto incluye `vercel.json` con configuraciones optimizadas:
+
+#### 🚀 **Funciones Optimizadas**
+- **Timeout de 30s** para todas las API routes
+- **Manejo robusto** de webhooks de larga duración
+
+#### 🌐 **CORS Configurado**
+- **Headers automáticos** para webhooks
+- **Soporte completo** para `resend-signature` y `x-webhook-secret`
+- **Métodos permitidos**: GET, POST, PUT, DELETE, OPTIONS
+
+#### 🔗 **URLs Amigables**
+- `/webhooks/*` → redirige a `/api/webhooks/*`
+- `/webhook/*` → redirige a `/api/webhooks/*` 
+- `/docs/webhooks` → muestra info de webhooks
+
+### Deploy Steps
+
 1. Conecta tu repositorio a Vercel
 2. Configura las variables de entorno en el dashboard de Vercel
-3. Haz deploy
+3. Haz deploy (automático con cada push)
 
 \`\`\`bash
 npm run build
+\`\`\`
+
+### URLs Disponibles Después del Deploy
+
+\`\`\`bash
+# Webhooks
+https://tu-proyecto.vercel.app/api/webhooks/resend
+https://tu-proyecto.vercel.app/webhooks/resend  # redirect automático
+
+# Documentación
+https://tu-proyecto.vercel.app/api/webhooks
+https://tu-proyecto.vercel.app/docs/webhooks   # alias
 \`\`\`
 
 ## 🎯 Uso del Sistema
