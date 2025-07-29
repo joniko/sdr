@@ -181,11 +181,35 @@ ALTER TABLE email_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
 \`\`\`
 
-### 4. Configurar Resend Webhooks
+### 4. Configurar Webhooks en Vercel
+
+#### Configuración de Resend Webhooks
 
 1. Ve a tu dashboard de Resend
-2. Configura un webhook con la URL: `https://tu-dominio.com/api/webhooks/resend`
-3. Selecciona todos los eventos de email que quieres escuchar
+2. Configura un webhook con la URL: `https://tu-dominio.vercel.app/api/webhooks/resend`
+3. Selecciona todos los eventos de email que quieres escuchar:
+   - `email.sent`
+   - `email.delivered`
+   - `email.bounced`
+   - `email.complained`
+   - `email.opened`
+   - `email.clicked`
+   - `email.failed`
+
+#### Verificación de Webhooks
+
+Puedes verificar la configuración visitando:
+- `GET /api/webhooks` - Información de todos los webhooks
+- `GET /api/webhooks/resend` - Información específica del webhook de Resend
+
+#### Características de los Webhooks
+
+- ✅ **Almacenamiento automático** de eventos en base de datos
+- ✅ **Actualización de estado** de contactos en tiempo real
+- ✅ **Procesamiento de reglas** de automatización
+- ✅ **Adaptación inteligente** de contenido
+- ✅ **Analytics en tiempo real**
+- ✅ **Manejo robusto de errores**
 
 ### 5. Ejecutar en Desarrollo
 
@@ -297,7 +321,33 @@ El sistema adapta automáticamente el contenido basándose en los eventos:
   - Tipos: `single`, `template`, `campaign`
 
 ### Webhooks
-- `POST /api/webhooks/resend` - Webhook de Resend
+- `GET /api/webhooks` - Información de todos los webhooks
+- `GET /api/webhooks/resend` - Información del webhook de Resend
+- `POST /api/webhooks/resend` - Webhook de Resend para eventos de email
+
+#### Debugging de Webhooks en Vercel
+
+Para debuggear webhooks en Vercel:
+
+1. **Logs en tiempo real**:
+   ```bash
+   vercel logs --follow
+   ```
+
+2. **Verificar configuración**:
+   ```bash
+   curl https://tu-dominio.vercel.app/api/webhooks
+   ```
+
+3. **Test de webhook de Resend**:
+   ```bash
+   curl https://tu-dominio.vercel.app/api/webhooks/resend
+   ```
+
+4. **Monitorear en Vercel Dashboard**:
+   - Ve a tu proyecto en Vercel
+   - Sección "Functions" → "View Function Logs"
+   - Filtra por `/api/webhooks/resend`
 
 ## 🔧 Desarrollo
 
