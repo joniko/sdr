@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { sendTemplatedEmail, sendEmail } from '@/lib/resend';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { resendService } from '@/lib/resend-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
       template_id,
       campaign_id,
       contact_ids,
-      variables = {}
+      variables = {},
+      organization_id = 'default'
     } = body;
 
     // Validate request
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     switch (type) {
       case 'single':
-        // Send single email
+        // Send single email using improved service
         if (!subject) {
           return NextResponse.json(
             { error: 'Subject is required for single emails' }, 
@@ -37,30 +38,32 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const singleResult = await sendEmail({
-          to,
-          from: process.env.FROM_EMAIL || 'noreply@example.com',
+        const singleResult = await resendService.sendEmail({
+          to: Array.isArray(to) ? to[0] : to,
           subject,
-          html,
-          text
+          html: html || '',
+          text,
+          organizationId: organization_id,
+          templateName: 'single-email',
+          metadata: { campaign_id, variables }
         });
 
-        if (singleResult.success && singleResult.data) {
-          // Log to database
+        if (singleResult?.id) {
           await logEmailSent({
-            email_id: singleResult.data.data?.id || 'unknown',
+            email_id: singleResult.id,
             contact_email: Array.isArray(to) ? to[0] : to,
             subject,
-            campaign_id: campaign_id || null,
-            template_id: template_id || null
+            campaign_id,
+            template_id,
+            organization_id
           });
         }
 
-        results.push(singleResult);
+        results.push({ success: true, data: singleResult });
         break;
 
       case 'template':
-        // Send email using template
+        // Send email using template with improved service
         if (!template_id) {
           return NextResponse.json(
             { error: 'Template ID is required' }, 
@@ -68,22 +71,9 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const { data: template } = await supabaseAdmin
-          .from('email_templates')
-          .select('*')
-          .eq('id', template_id)
-          .single();
-
-        if (!template) {
-          return NextResponse.json(
-            { error: 'Template not found' }, 
-            { status: 404 }
-          );
-        }
-
         // Get contact info
         const contactEmail = Array.isArray(to) ? to[0] : to;
-        const { data: contact } = await supabaseAdmin
+        const { data: contact } = await getSupabaseAdmin()
           .from('contacts')
           .select('*')
           .eq('email', contactEmail)
@@ -96,19 +86,18 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const templateResult = await sendTemplatedEmail(template, contact, variables);
-        
-        if (templateResult.success && templateResult.data) {
-          await logEmailSent({
-            email_id: templateResult.data.data?.id || 'unknown',
-            contact_email: contact.email,
-            subject: template.subject_template,
-            campaign_id,
-            template_id
-          });
-        }
+        const templateResult = await resendService.sendTemplateEmail({
+          templateId: template_id,
+          recipient: {
+            email: contact.email,
+            name: contact.first_name || contact.email,
+            contactId: contact.id
+          },
+          organizationId: organization_id,
+          variables
+        });
 
-        results.push(templateResult);
+        results.push({ success: true, data: templateResult });
         break;
 
       case 'campaign':
@@ -121,6 +110,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get campaign and template
+        const supabaseAdmin = getSupabaseAdmin();
         const { data: campaign } = await supabaseAdmin
           .from('campaigns')
           .select(`
@@ -151,29 +141,27 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Send to each contact
+        // Send to each contact using improved service
         for (const contact of contacts) {
           try {
-            const campaignResult = await sendTemplatedEmail(
-              campaign.email_templates, 
-              contact, 
-              variables
-            );
-            
-            if (campaignResult.success && campaignResult.data) {
-              await logEmailSent({
-                email_id: campaignResult.data.data?.id || 'unknown',
-                contact_email: contact.email,
-                subject: campaign.email_templates.subject_template,
-                campaign_id,
-                template_id: campaign.template_id
-              });
-            }
+            const campaignResult = await resendService.sendTemplateEmail({
+              templateId: campaign.email_templates.name,
+              recipient: {
+                email: contact.email,
+                name: contact.first_name || contact.email,
+                contactId: contact.id
+              },
+              organizationId: organization_id,
+              variables: {
+                campaign_name: campaign.name,
+                ...variables
+              }
+            });
 
             results.push({
               contact_id: contact.id,
               email: contact.email,
-              result: campaignResult
+              result: { success: true, data: campaignResult }
             });
           } catch (error) {
             console.error(`Error sending to ${contact.email}:`, error);
@@ -217,15 +205,19 @@ async function logEmailSent({
   contact_email,
   subject,
   campaign_id,
-  template_id
+  template_id,
+  organization_id = 'default'
 }: {
   email_id: string;
   contact_email: string;
   subject: string;
-  campaign_id?: string | null;
-  template_id?: string | null;
+  campaign_id?: string;
+  template_id?: string;
+  organization_id?: string;
 }) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+    
     // Get or create contact
     let { data: contact } = await supabaseAdmin
       .from('contacts')
@@ -239,7 +231,7 @@ async function logEmailSent({
         .insert({
           email: contact_email,
           status: 'active',
-          user_id: 'current_user'
+          user_id: organization_id
         })
         .select('id')
         .single();
@@ -258,7 +250,7 @@ async function logEmailSent({
           email_id,
           subject,
           status: 'sent',
-          user_id: 'current_user'
+          user_id: organization_id
         });
     }
   } catch (error) {

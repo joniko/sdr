@@ -63,6 +63,9 @@ RESEND_API_KEY=your_resend_api_key_here
 # Email Configuration
 FROM_EMAIL=noreply@yourdomain.com
 
+# Development Email Redirect (optional)
+DEV_EMAIL_REDIRECT=test@yourdomain.com
+
 # Webhook Configuration
 WEBHOOK_SECRET=your_webhook_secret_here
 \`\`\`
@@ -256,6 +259,18 @@ El sistema adapta automáticamente el contenido basándose en los eventos:
 - **Clic Registrado**: Envía contenido de agradecimiento y siguientes pasos
 - **Email Rebotado**: Crea contenido para métodos alternativos de contacto
 - **Marcado como Spam**: Envía mensaje de disculpa y confirma unsubscribe
+
+### 🔥 Nuevas Características Avanzadas
+
+- **Interpolación Inteligente**: Soporte para expresiones condicionales en templates
+  ```html
+  <p>{status === 'active' ? 'Usuario activo' : 'Usuario inactivo'}</p>
+  ```
+- **Branding por Organización**: Headers y footers personalizados por cliente
+- **Validación Robusta**: Validación automática de formatos de email
+- **Redirección en Desarrollo**: Emails seguros durante testing
+- **Headers Personalizados**: Tracking avanzado con metadata
+- **Logs Detallados**: Registro completo de todas las operaciones
 
 ### Ejemplos de Adaptación
 
