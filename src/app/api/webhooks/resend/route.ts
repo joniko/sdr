@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { EmailEventType } from '@/types/email';
 import { resendService } from '@/lib/resend-service';
 import { processEmailEvent } from '@/lib/automation';
+import { sequenceEngine } from '@/lib/sequences/sequence-engine';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 /**
@@ -35,9 +36,11 @@ export async function GET() {
       timeout: '30s',
       features: [
         'Automatic event storage in database',
-        'Contact status updates',
+        'Contact status updates', 
+        'Intelligent email sequences (4 predefined flows)',
+        'Behavioral trigger automation',
+        'Dynamic content adaptation based on engagement',
         'Automation rules processing',
-        'Intelligent content adaptation',
         'Real-time analytics updates'
       ]
     },
@@ -99,6 +102,9 @@ export async function POST(req: NextRequest) {
       console.error('Database error logging webhook event:', dbError);
       // Don't fail the webhook for logging errors
     }
+
+    // 🚀 NUEVO: Procesar secuencias inteligentes
+    await sequenceEngine.processEmailEvent(type, data);
 
     // Process automation rules (the important part I removed!)
     await processEmailEvent(type, data);
