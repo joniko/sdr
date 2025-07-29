@@ -53,7 +53,7 @@ Configura las siguientes variables en `.env.local`:
 
 \`\`\`env
 # === RESEND CONFIGURATION ===
-RESEND_API_KEY=re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1
+RESEND_API_KEY=re_your_resend_api_key_here
 RESEND_WEBHOOK_SECRET=your_webhook_secret_here
 
 # === SUPABASE CONFIGURATION ===
@@ -71,10 +71,10 @@ NEXTAUTH_URL=http://localhost:3000
 WEBHOOK_SECRET=change-this-in-production
 
 # === ORGANIZATION SETTINGS (OPCIONAL) ===
-ORG_5_RESEND_API_KEY=re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1
+ORG_5_RESEND_API_KEY=re_your_org_specific_key_here
 \`\`\`
 
-> **🔑 TU API KEY YA ESTÁ CONFIGURADA**: El sistema usará automáticamente `re_dV3TouAN_DCjaa6YpjircxtxJ32kRKot1`
+> **📝 NOTA**: Reemplaza `re_your_resend_api_key_here` con tu API key real de Resend.
 
 ### 3. Configurar Webhook de Resend
 
